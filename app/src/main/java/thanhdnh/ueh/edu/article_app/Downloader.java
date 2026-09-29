@@ -11,94 +11,156 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
-import java.util.HashMap;
-import java.util.Map;
 
 import okhttp3.Call;
 import okhttp3.Callback;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
-import okio.BufferedSink;
-import okio.Okio;
 
 public class Downloader {
+
   public static String cached_file_path = "";
 
-  public static File downloadFile(String url, File cached) {
-    OkHttpClient client = new OkHttpClient();
-    Request request = new Request.Builder().url(url).build();
+  public static void downloadWithProgress(
+          String inputurl,
+          Handler mainHandler,
+          Context context,
+          File where2store,
+          ProgressBar progressBar,
+          ImageView imageView) {
 
-    try (Response response = client.newCall(request).execute()) {
-      if (!response.isSuccessful()) return null;
-      String contentType = response.header("Content-Type", "");
-      String extension = getExtensionFromMimeType(contentType);
-      File file = File.createTempFile("downloaded_file", extension, cached);
-      if (response.body() != null) {
-        BufferedSink sink = Okio.buffer(Okio.sink(file));
-        sink.writeAll(response.body().source());
-        sink.close();
-        return file;
-      }
-    } catch (IOException e) {
-      e.printStackTrace();
-    }
-    return null;
-  }
-  public static void downloadWithProgress(String inputurl, Handler mainHandler, Context context, File where2store, ProgressBar progressBar, ImageView imageView) {
-    OkHttpClient client = new OkHttpClient();
-    Request request = new Request.Builder().url(inputurl).build();
+    OkHttpClient client =
+            new OkHttpClient();
 
-    client.newCall(request).enqueue(new Callback() {
-      @Override
-      public void onFailure(Call call, IOException e) {
-        mainHandler.post(() -> {
-          progressBar.setVisibility(ProgressBar.INVISIBLE);
-        });
-      }
+    Request request =
+            new Request.Builder()
+                    .url(inputurl)
+                    .build();
 
-      @Override
-      public void onResponse(Call call, Response response) {
-        if (!response.isSuccessful()) {
-          mainHandler.post(() -> {});
-          return;
-        }
+    client.newCall(request).enqueue(
+            new Callback() {
 
-        long totalBytes = response.body().contentLength();
-        InputStream inputStream = response.body().byteStream();
-        String contentType = response.header("Content-Type", "");
-        String extension = getExtensionFromMimeType(contentType);
+              @Override
+              public void onFailure(
+                      Call call,
+                      IOException e) {
 
-        try (OutputStream outputStream = new FileOutputStream(where2store + "/downloaded_file" + extension)) {
-          byte[] buffer = new byte[1024];
-          long downloadedBytes = 0;
-          int bytesRead;
+                mainHandler.post(
+                        new Runnable() {
 
-          while ((bytesRead = inputStream.read(buffer)) != -1) {
-            outputStream.write(buffer, 0, bytesRead);
-            downloadedBytes += bytesRead;
-            int progress = (int) ((downloadedBytes * 100) / totalBytes);
-            mainHandler.post(() -> progressBar.setProgress(progress));
-          }
-          outputStream.flush();
+                          @Override
+                          public void run() {
 
-          mainHandler.post(() -> {
-            cached_file_path = where2store + "/downloaded_file" + extension;
-            imageView.setImageURI(Uri.parse(cached_file_path));
-            progressBar.setVisibility(ProgressBar.INVISIBLE);
-          });
-        } catch (Exception e) {
-          mainHandler.post(() -> {});
-        }
-      }
-    });
-  }
+                            progressBar.setVisibility(
+                                    ProgressBar.INVISIBLE
+                            );
+                          }
+                        }
+                );
+              }
 
-  private static String getExtensionFromMimeType(String mimeType) {
-    Map<String, String> mimeMap = new HashMap<>();
-    mimeMap.put("image/jpeg", ".jpg");
-    mimeMap.put("image/png", ".png");
-    mimeMap.put("application/json", ".json");
-    return mimeMap.getOrDefault(mimeType, "");
+              @Override
+              public void onResponse(
+                      Call call,
+                      Response response) {
+
+                if (!response.isSuccessful()) {
+                  return;
+                }
+
+                long totalBytes =
+                        response.body().contentLength();
+
+                InputStream inputStream =
+                        response.body().byteStream();
+
+                try {
+
+                  File file =
+                          File.createTempFile(
+                                  "user_avatar",
+                                  ".jpg",
+                                  where2store
+                          );
+
+                  OutputStream outputStream =
+                          new FileOutputStream(file);
+
+                  byte[] buffer =
+                          new byte[1024];
+
+                  long downloadedBytes = 0;
+
+                  int bytesRead;
+
+                  while ((bytesRead =
+                          inputStream.read(buffer)) != -1) {
+
+                    outputStream.write(
+                            buffer,
+                            0,
+                            bytesRead
+                    );
+
+                    downloadedBytes +=
+                            bytesRead;
+
+                    if (totalBytes > 0) {
+
+                      int progress =
+                              (int) (
+                                      (downloadedBytes * 100)
+                                              / totalBytes
+                              );
+
+                      mainHandler.post(
+                              new Runnable() {
+
+                                @Override
+                                public void run() {
+
+                                  progressBar.setProgress(
+                                          progress
+                                  );
+                                }
+                              }
+                      );
+                    }
+                  }
+
+                  outputStream.flush();
+                  outputStream.close();
+                  inputStream.close();
+
+                  cached_file_path =
+                          file.getAbsolutePath();
+
+                  mainHandler.post(
+                          new Runnable() {
+
+                            @Override
+                            public void run() {
+
+                              imageView.setImageURI(
+                                      Uri.parse(
+                                              cached_file_path
+                                      )
+                              );
+
+                              progressBar.setVisibility(
+                                      ProgressBar.INVISIBLE
+                              );
+                            }
+                          }
+                  );
+
+                } catch (Exception e) {
+
+                  e.printStackTrace();
+                }
+              }
+            }
+    );
   }
 }
