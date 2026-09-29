@@ -1,0 +1,52 @@
+{
+  "users": [
+    {
+      "id": 1,
+      "username": "Jennie Nichols",
+      "email": "jennie.nichols@example.com",
+      "desc": "A user who enjoys meeting new people and exploring new places.",
+      "avatar_url": "https://randomuser.me/api/portraits/women/75.jpg",
+      "hoppy": "Travel, Music, Photography"
+    },
+    {
+      "id": 2,
+      "username": "Andy Adams",
+      "email": "andy.adams@example.com",
+      "desc": "Interested in technology, sports and outdoor activities.",
+      "avatar_url": "https://randomuser.me/api/portraits/men/75.jpg",
+      "hoppy": "Technology, Football, Hiking"
+    },
+    {
+      "id": 3,
+      "username": "Florence Fowler",
+      "email": "florence.fowler@example.com",
+      "desc": "Enjoys reading, cooking and spending time with friends.",
+      "avatar_url": "https://randomuser.me/api/portraits/women/33.jpg",
+      "hoppy": "Reading, Cooking, Music"
+    },
+    {
+      "id": 4,
+      "username": "Blake Bennett",
+      "email": "blake.bennett@example.com",
+      "desc": "Likes business, travelling and discovering new experiences.",
+      "avatar_url": "https://randomuser.me/api/portraits/men/53.jpg",
+      "hoppy": "Business, Travel, Photography"
+    },
+    {
+      "id": 5,
+      "username": "Megan Martin",
+      "email": "megan.martin@example.com",
+      "desc": "A creative person interested in art and entertainment.",
+      "avatar_url": "https://randomuser.me/api/portraits/women/35.jpg",
+      "hoppy": "Art, Movies, Drawing"
+    },
+    {
+      "id": 6,
+      "username": "Elisabeth Schaefer",
+      "email": "elisabeth.schaefer@example.com",
+      "desc": "Enjoys learning languages, travelling and reading books.",
+      "avatar_url": "https://randomuser.me/api/portraits/women/24.jpg",
+      "hoppy": "Languages, Travel, Reading"
+    }
+  ]
+}
