@@ -10,45 +10,56 @@ import androidx.appcompat.app.AppCompatActivity;
 
 public class MainActivity extends AppCompatActivity {
 
-  public GridView gridview;
+    public GridView gridview;
 
-  private AdapterView.OnItemClickListener onitemclick =
-          new AdapterView.OnItemClickListener() {
+    private AdapterView.OnItemClickListener onitemclick =
+            new AdapterView.OnItemClickListener() {
 
-            @Override
-            public void onItemClick(
-                    AdapterView<?> parent,
-                    View view,
-                    int position,
-                    long id) {
+                @Override
+                public void onItemClick(
+                        AdapterView<?> parent,
+                        View view,
+                        int position,
+                        long id) {
 
-              Intent intent = new Intent(
-                      getBaseContext(),
-                      ViewUserActivity.class
-              );
+                    Intent intent =
+                            new Intent(
+                                    getBaseContext(),
+                                    ViewUserActivity.class
+                            );
 
-              intent.putExtra("id", id);
+                    intent.putExtra(
+                            "id",
+                            gridview.getAdapter()
+                                    .getItemId(position)
+                    );
 
-              startActivity(intent);
-            }
-          };
+                    startActivity(intent);
+                }
+            };
 
-  @Override
-  protected void onCreate(Bundle savedInstanceState) {
+    @Override
+    protected void onCreate(Bundle savedInstanceState) {
 
-    super.onCreate(savedInstanceState);
+        super.onCreate(savedInstanceState);
 
-    setContentView(R.layout.activity_main);
+        setContentView(R.layout.activity_main);
 
-    getSupportActionBar().hide();
+        getSupportActionBar().hide();
 
-    gridview = findViewById(R.id.gridview);
+        gridview =
+                findViewById(R.id.gridview);
 
-    new UserData(
-            getBaseContext(),
-            gridview
-    ).loadData(this);
+        new UserData(
+                getBaseContext(),
+                gridview
+        ).loadData(
+                "https://raw.githubusercontent.com/Contest451/PhotoApp_Lab08/refs/heads/master/User.json",
+                this
+        );
 
-    gridview.setOnItemClickListener(onitemclick);
-  }
+        gridview.setOnItemClickListener(
+                onitemclick
+        );
+    }
 }

@@ -17,7 +17,10 @@ public class UserAdapter extends BaseAdapter {
   private ArrayList<UserProfile> user_list;
   private Context context;
 
-  public UserAdapter(ArrayList<UserProfile> user_list, Context context) {
+  public UserAdapter(
+          ArrayList<UserProfile> user_list,
+          Context context) {
+
     this.user_list = user_list;
     this.context = context;
   }
@@ -34,11 +37,16 @@ public class UserAdapter extends BaseAdapter {
 
   @Override
   public long getItemId(int position) {
-    return user_list.get(position).getId();
+    return user_list
+            .get(position)
+            .getId();
   }
 
   @Override
-  public View getView(int position, View convertView, ViewGroup parent) {
+  public View getView(
+          int position,
+          View convertView,
+          ViewGroup parent) {
 
     final MyView dataitem;
 
@@ -51,32 +59,44 @@ public class UserAdapter extends BaseAdapter {
 
       dataitem = new MyView();
 
-      convertView = inflater.inflate(
-              R.layout.user_disp_tpl,
-              null
-      );
+      convertView =
+              inflater.inflate(
+                      R.layout.user_disp_tpl,
+                      null
+              );
 
       dataitem.iv_photo =
-              convertView.findViewById(R.id.imv_photo);
+              convertView.findViewById(
+                      R.id.imv_photo
+              );
 
       dataitem.tv_caption =
-              convertView.findViewById(R.id.tv_username);
+              convertView.findViewById(
+                      R.id.tv_username
+              );
 
       convertView.setTag(dataitem);
 
     } else {
 
-      dataitem = (MyView) convertView.getTag();
+      dataitem =
+              (MyView) convertView.getTag();
     }
 
     Picasso.get()
-            .load(user_list.get(position).getAvatar_url())
+            .load(
+                    user_list
+                            .get(position)
+                            .getAvatar_url()
+            )
             .resize(300, 300)
             .centerCrop()
             .into(dataitem.iv_photo);
 
     dataitem.tv_caption.setText(
-            user_list.get(position).getUsername()
+            user_list
+                    .get(position)
+                    .getUsername()
     );
 
     return convertView;

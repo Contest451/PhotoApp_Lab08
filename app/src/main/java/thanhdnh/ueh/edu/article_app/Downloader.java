@@ -20,147 +20,249 @@ import okhttp3.Response;
 
 public class Downloader {
 
-  public static String cached_file_path = "";
+    public static String cached_file_path = "";
 
-  public static void downloadWithProgress(
-          String inputurl,
-          Handler mainHandler,
-          Context context,
-          File where2store,
-          ProgressBar progressBar,
-          ImageView imageView) {
+    public interface DownloadCallback {
+        void onSuccess(File file);
+        void onFailure();
+    }
 
-    OkHttpClient client =
-            new OkHttpClient();
+    public static void downloadWithProgress(
+            String inputurl,
+            Handler mainHandler,
+            Context context,
+            File where2store,
+            ProgressBar progressBar,
+            ImageView imageView) {
 
-    Request request =
-            new Request.Builder()
-                    .url(inputurl)
-                    .build();
+        downloadWithProgress(
+                inputurl,
+                mainHandler,
+                context,
+                where2store,
+                progressBar,
+                imageView,
+                null
+        );
+    }
 
-    client.newCall(request).enqueue(
-            new Callback() {
+    public static void downloadWithProgress(
+            String inputurl,
+            Handler mainHandler,
+            Context context,
+            File where2store,
+            ProgressBar progressBar,
+            ImageView imageView,
+            DownloadCallback callback) {
 
-              @Override
-              public void onFailure(
-                      Call call,
-                      IOException e) {
+        OkHttpClient client =
+                new OkHttpClient();
 
-                mainHandler.post(
-                        new Runnable() {
+        Request request =
+                new Request.Builder()
+                        .url(inputurl)
+                        .build();
 
-                          @Override
-                          public void run() {
+        client.newCall(request).enqueue(
+                new Callback() {
 
-                            progressBar.setVisibility(
-                                    ProgressBar.INVISIBLE
+                    @Override
+                    public void onFailure(
+                            Call call,
+                            IOException e) {
+
+                        if (mainHandler != null) {
+
+                            mainHandler.post(
+                                    new Runnable() {
+
+                                        @Override
+                                        public void run() {
+
+                                            if (progressBar != null) {
+                                                progressBar.setVisibility(
+                                                        ProgressBar.INVISIBLE
+                                                );
+                                            }
+
+                                            if (callback != null) {
+                                                callback.onFailure();
+                                            }
+                                        }
+                                    }
                             );
-                          }
                         }
-                );
-              }
-
-              @Override
-              public void onResponse(
-                      Call call,
-                      Response response) {
-
-                if (!response.isSuccessful()) {
-                  return;
-                }
-
-                long totalBytes =
-                        response.body().contentLength();
-
-                InputStream inputStream =
-                        response.body().byteStream();
-
-                try {
-
-                  File file =
-                          File.createTempFile(
-                                  "user_avatar",
-                                  ".jpg",
-                                  where2store
-                          );
-
-                  OutputStream outputStream =
-                          new FileOutputStream(file);
-
-                  byte[] buffer =
-                          new byte[1024];
-
-                  long downloadedBytes = 0;
-
-                  int bytesRead;
-
-                  while ((bytesRead =
-                          inputStream.read(buffer)) != -1) {
-
-                    outputStream.write(
-                            buffer,
-                            0,
-                            bytesRead
-                    );
-
-                    downloadedBytes +=
-                            bytesRead;
-
-                    if (totalBytes > 0) {
-
-                      int progress =
-                              (int) (
-                                      (downloadedBytes * 100)
-                                              / totalBytes
-                              );
-
-                      mainHandler.post(
-                              new Runnable() {
-
-                                @Override
-                                public void run() {
-
-                                  progressBar.setProgress(
-                                          progress
-                                  );
-                                }
-                              }
-                      );
                     }
-                  }
 
-                  outputStream.flush();
-                  outputStream.close();
-                  inputStream.close();
+                    @Override
+                    public void onResponse(
+                            Call call,
+                            Response response) {
 
-                  cached_file_path =
-                          file.getAbsolutePath();
+                        if (!response.isSuccessful()
+                                || response.body() == null) {
 
-                  mainHandler.post(
-                          new Runnable() {
+                            if (mainHandler != null) {
 
-                            @Override
-                            public void run() {
+                                mainHandler.post(
+                                        new Runnable() {
 
-                              imageView.setImageURI(
-                                      Uri.parse(
-                                              cached_file_path
-                                      )
-                              );
+                                            @Override
+                                            public void run() {
 
-                              progressBar.setVisibility(
-                                      ProgressBar.INVISIBLE
-                              );
+                                                if (callback != null) {
+                                                    callback.onFailure();
+                                                }
+                                            }
+                                        }
+                                );
                             }
-                          }
-                  );
 
-                } catch (Exception e) {
+                            return;
+                        }
 
-                  e.printStackTrace();
+                        long totalBytes =
+                                response.body().contentLength();
+
+                        InputStream inputStream =
+                                response.body().byteStream();
+
+                        try {
+
+                            String extension = ".json";
+
+                            String contentType =
+                                    response.header(
+                                            "Content-Type",
+                                            ""
+                                    );
+
+                            if (contentType.contains("image/jpeg")) {
+                                extension = ".jpg";
+                            }
+
+                            if (contentType.contains("image/png")) {
+                                extension = ".png";
+                            }
+
+                            if (contentType.contains("application/json")) {
+                                extension = ".json";
+                            }
+
+                            File file =
+                                    new File(
+                                            where2store,
+                                            "downloaded_file" + extension
+                                    );
+
+                            OutputStream outputStream =
+                                    new FileOutputStream(file);
+
+                            byte[] buffer =
+                                    new byte[1024];
+
+                            long downloadedBytes = 0;
+
+                            int bytesRead;
+
+                            while ((bytesRead =
+                                    inputStream.read(buffer)) != -1) {
+
+                                outputStream.write(
+                                        buffer,
+                                        0,
+                                        bytesRead
+                                );
+
+                                downloadedBytes += bytesRead;
+
+                                if (totalBytes > 0) {
+
+                                    final int progress =
+                                            (int) (
+                                                    downloadedBytes * 100
+                                                            / totalBytes
+                                            );
+
+                                    if (mainHandler != null
+                                            && progressBar != null) {
+
+                                        mainHandler.post(
+                                                new Runnable() {
+
+                                                    @Override
+                                                    public void run() {
+
+                                                        progressBar.setProgress(
+                                                                progress
+                                                        );
+                                                    }
+                                                }
+                                        );
+                                    }
+                                }
+                            }
+
+                            outputStream.flush();
+                            outputStream.close();
+                            inputStream.close();
+
+                            cached_file_path =
+                                    file.getAbsolutePath();
+
+                            if (mainHandler != null) {
+
+                                mainHandler.post(
+                                        new Runnable() {
+
+                                            @Override
+                                            public void run() {
+
+                                                if (progressBar != null) {
+                                                    progressBar.setVisibility(
+                                                            ProgressBar.INVISIBLE
+                                                    );
+                                                }
+
+                                                if (imageView != null) {
+
+                                                    imageView.setImageURI(
+                                                            Uri.parse(
+                                                                    cached_file_path
+                                                            )
+                                                    );
+                                                }
+
+                                                if (callback != null) {
+                                                    callback.onSuccess(file);
+                                                }
+                                            }
+                                        }
+                                );
+                            }
+
+                        } catch (Exception e) {
+
+                            e.printStackTrace();
+
+                            if (mainHandler != null) {
+
+                                mainHandler.post(
+                                        new Runnable() {
+
+                                            @Override
+                                            public void run() {
+
+                                                if (callback != null) {
+                                                    callback.onFailure();
+                                                }
+                                            }
+                                        }
+                                );
+                            }
+                        }
+                    }
                 }
-              }
-            }
-    );
-  }
+        );
+    }
 }

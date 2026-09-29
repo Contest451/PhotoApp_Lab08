@@ -2,11 +2,16 @@ package thanhdnh.ueh.edu.article_app;
 
 import android.app.Activity;
 import android.content.Context;
+import android.os.Handler;
 import android.widget.GridView;
 
 import com.google.gson.Gson;
 
-import java.util.ArrayList;
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 
 public class UserData {
 
@@ -15,16 +20,28 @@ public class UserData {
   private Context context;
   private GridView gridview;
 
-  public UserData(Context context, GridView gridview) {
+  public UserData(
+          Context context,
+          GridView gridview) {
+
     this.context = context;
     this.gridview = gridview;
   }
 
   public static UserProfile getUserFromId(int id) {
 
-    for (int i = 0; i < data.getUsers().size(); i++) {
+    if (data == null) {
+      return null;
+    }
 
-      if (data.getUsers().get(i).getId() == id) {
+    for (int i = 0;
+         i < data.getUsers().size();
+         i++) {
+
+      if (data.getUsers()
+              .get(i)
+              .getId() == id) {
+
         return data.getUsers().get(i);
       }
     }
@@ -32,91 +49,102 @@ public class UserData {
     return null;
   }
 
-  public void loadData(Activity activity) {
+  public void loadData(
+          String url,
+          Activity activity) {
 
-    ArrayList<UserProfile> users =
-            new ArrayList<UserProfile>();
-
-    users.add(new UserProfile(
-            1,
-            "Nguyen Van An",
-            "an@gmail.com",
-            "Sinh vien CNTT, yeu thich lap trinh va cong nghe.",
-            "https://i.pravatar.cc/300?img=1",
-            "Coding, Music, Gaming"
-    ));
-
-    users.add(new UserProfile(
-            2,
-            "Tran Thi Binh",
-            "binh@gmail.com",
-            "Yeu thich thiet ke va chup anh.",
-            "https://i.pravatar.cc/300?img=2",
-            "Design, Photography, Travel"
-    ));
-
-    users.add(new UserProfile(
-            3,
-            "Le Van Cuong",
-            "cuong@gmail.com",
-            "Quan tam den kinh doanh va khoi nghiep.",
-            "https://i.pravatar.cc/300?img=3",
-            "Business, Reading, Football"
-    ));
-
-    users.add(new UserProfile(
-            4,
-            "Pham Thi Dung",
-            "dung@gmail.com",
-            "Yeu thich hoc ngoai ngu va du lich.",
-            "https://i.pravatar.cc/300?img=4",
-            "English, Travel, Cooking"
-    ));
-
-    users.add(new UserProfile(
-            5,
-            "Hoang Van Em",
-            "em@gmail.com",
-            "Sinh vien dam me the thao va cong nghe.",
-            "https://i.pravatar.cc/300?img=5",
-            "Football, Technology, Movies"
-    ));
-
-    users.add(new UserProfile(
-            6,
-            "Vo Thi Giang",
-            "giang@gmail.com",
-            "Yeu thich doc sach va viet blog.",
-            "https://i.pravatar.cc/300?img=6",
-            "Reading, Writing, Music"
-    ));
-
-    /*
-     * Tao UserList tu du lieu tinh
-     */
-    UserList staticData = new UserList(users);
-
-    /*
-     * Dung Gson de chuyen object thanh JSON
-     */
-    Gson gson = new Gson();
-
-    String json = gson.toJson(staticData);
-
-    /*
-     * Dung Gson doc JSON thanh UserList
-     */
-    data = gson.fromJson(json, UserList.class);
-
-    /*
-     * Dua du lieu vao Adapter
-     */
-    UserAdapter adapter =
-            new UserAdapter(
-                    data.getUsers(),
-                    context
+    final Handler mainHandler =
+            new Handler(
+                    activity.getMainLooper()
             );
 
-    gridview.setAdapter(adapter);
+    File cacheFolder =
+            context.getCacheDir();
+
+    Downloader.downloadWithProgress(
+            url,
+            mainHandler,
+            context,
+            cacheFolder,
+            null,
+            null,
+            new Downloader.DownloadCallback() {
+
+              @Override
+              public void onSuccess(
+                      File file) {
+
+                try {
+
+                  Gson gson =
+                          new Gson();
+
+                  data =
+                          gson.fromJson(
+                                  readText(file),
+                                  UserList.class
+                          );
+
+                  UserAdapter adapter =
+                          new UserAdapter(
+                                  data.getUsers(),
+                                  context
+                          );
+
+                  gridview.setAdapter(
+                          adapter
+                  );
+
+                } catch (Exception e) {
+
+                  e.printStackTrace();
+                }
+              }
+
+              @Override
+              public void onFailure() {
+
+              }
+            }
+    );
+  }
+
+  public String readText(File file) {
+
+    BufferedReader reader = null;
+
+    try {
+
+      InputStream stream =
+              new FileInputStream(file);
+
+      reader =
+              new BufferedReader(
+                      new InputStreamReader(stream)
+              );
+
+      StringBuffer buffer =
+              new StringBuffer();
+
+      String line = "";
+
+      while ((line =
+              reader.readLine()) != null) {
+
+        buffer.append(
+                line + "\n"
+        );
+      }
+
+      reader.close();
+
+      return buffer.toString();
+
+    } catch (Exception e) {
+
+      e.printStackTrace();
+    }
+
+    return "";
   }
 }
